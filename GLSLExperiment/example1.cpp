@@ -1,7 +1,7 @@
-﻿/*Chương trình chiếu sáng Blinn-Phong (Phong sua doi) cho hình lập phương đơn vị, điều khiển quay bằng phím x, y, z, X, Y, Z.*/
+﻿//Chương trình vẽ 1 hình lập phương đơn vị theo mô hình lập trình OpenGL hiện đại
 
 #include "Angel.h"  /* Angel.h là file tự phát triển (tác giả Prof. Angel), có chứa cả khai báo includes glew và freeglut*/
-#include <ctime>
+
 
 // remember to prototype
 void generateGeometry(void);
@@ -9,6 +9,7 @@ void initGPUBuffers(void);
 void shaderSetup(void);
 void display(void);
 void keyboard(unsigned char key, int x, int y);
+
 
 typedef vec4 point4;
 typedef vec4 color4;
@@ -19,23 +20,13 @@ const int NumPoints = 36;
 
 point4 points[NumPoints]; /* Danh sách các đỉnh của các tam giác cần vẽ*/
 color4 colors[NumPoints]; /* Danh sách các màu tương ứng cho các đỉnh trên*/
-vec3 normals[NumPoints]; /*Danh sách các vector pháp tuyến ứng với mỗi đỉnh*/
+vec3 normals[NumPoints]; /*Danh sách các vector pháp tuy?n ?ng v?i m?i d?nh*/
+
 
 point4 vertices[8]; /* Danh sách 8 đỉnh của hình lập phương*/
 color4 vertex_colors[8]; /*Danh sách các màu tương ứng cho 8 đỉnh hình lập phương*/
 
-GLuint program;
-
-GLfloat Theta[] = { 0, 0, 0,0,0,0,0 };
-GLfloat theta[] = { 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0 };
-GLfloat i, dr = 5;
-
-mat4 ctm, ctm_ban, ctm_bantb, ctm_cancau, ctm_xetai, ctm_xecau, ctm_xetai1, model, phongto;
-GLuint model_loc;
-mat4 projection;
-GLuint projection_loc;
-mat4 view;
-GLuint view_loc;
+GLuint program, model, projection, view;
 
 
 void initCube()
@@ -57,7 +48,7 @@ void initCube()
 	vertex_colors[3] = color4(0.0, 1.0, 0.0, 1.0); // green
 	vertex_colors[4] = color4(0.0, 0.0, 1.0, 1.0); // blue
 	vertex_colors[5] = color4(1.0, 0.0, 1.0, 1.0); // magenta
-	vertex_colors[6] = color4(1.0, 0.5, 0.0, 1.0); // orange
+	vertex_colors[6] = color4(1.0, 1.0, 1.0, 1.0); // white
 	vertex_colors[7] = color4(0.0, 1.0, 1.0, 1.0); // cyan
 }
 int Index = 0;
@@ -108,8 +99,8 @@ void initGPUBuffers(void)
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors);
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(points) + sizeof(colors), sizeof(normals), normals);
 
-
 }
+
 
 void shaderSetup(void)
 {
@@ -130,830 +121,15 @@ void shaderSetup(void)
 	glEnableVertexAttribArray(loc_vNormal);
 	glVertexAttribPointer(loc_vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(points) + sizeof(colors)));
 
-	/* Khởi tạo các tham số chiếu sáng - tô bóng*/
-	point4 light_position(0.0, 0.0, 1.0, 0.0);
-	color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-	color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
-	color4 light_specular(1.0, 1.0, 1.0, 1.0);
-
-	color4 material_ambient(1.0, 0.0, 1.0, 1.0);
-	color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-	color4 material_specular(1.0, 0.8, 0.0, 1.0);
-	float material_shininess = 100.0;
-
-	color4 ambient_product = light_ambient * material_ambient;
-	color4 diffuse_product = light_diffuse * material_diffuse;
-	color4 specular_product = light_specular * material_specular;
-
-	glUniform4fv(glGetUniformLocation(program, "AmbientProduct"), 1, ambient_product);
-	glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"), 1, diffuse_product);
-	glUniform4fv(glGetUniformLocation(program, "SpecularProduct"), 1, specular_product);
-	glUniform4fv(glGetUniformLocation(program, "LightPosition"), 1, light_position);
-	glUniform1f(glGetUniformLocation(program, "Shininess"), material_shininess);
-
-	model_loc = glGetUniformLocation(program, "Model");
-	projection_loc = glGetUniformLocation(program, "Projection");
-	view_loc = glGetUniformLocation(program, "View");
+	model = glGetUniformLocation(program, "model");
+	projection = glGetUniformLocation(program, "projection");
+	view = glGetUniformLocation(program, "view");
 
 	glEnable(GL_DEPTH_TEST);
+
 	glClearColor(1.0, 1.0, 1.0, 1.0);        /* Thiết lập màu trắng là màu xóa màn hình*/
 }
-point4 light_position(0.0, 0.0, 1.0, 0.0);
-color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
-color4 light_specular(1.0, 1.0, 1.0, 1.0);
-color4 material_ambient(1.0, 0.0, 1.0, 1.0);
-color4 material_diffuse(0.0, 1.0, 0.0, 0);
-color4 material_specular(1.0, 0.8, 0.0, 1.0);
-float material_shininess = 100.0;
-color4 ambient_product;
-color4 diffuse_product;
-color4 specular_product;
-color4 t;
-void setMau(float ad, float bd, float cd) {
-	material_diffuse = vec4(ad, bd, cd, 1.0);
-	ambient_product = light_ambient * material_ambient;
-	diffuse_product = light_diffuse * material_diffuse;
-	specular_product = light_specular * material_specular;
-	glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"), 1, diffuse_product);
-}
-void tualung() {
-	setMau(0, 0, 0);
-	mat4 instance = RotateX(-5) * Translate(0, 0.2, -0.14) * Scale(0.3, 0.25, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void tru() {
-	setMau(0, 0, 0);
-	mat4 instance = Translate(0, 0.035, -0.14) * Scale(0.02, 0.1, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void tayvinngang(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 255, 0);
-	mat4 instance = Translate(a, b, c) * Scale(0.02, 0.02, 0.15);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void tayvindoc(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 255, 0);
-	mat4 instance = Translate(a, b, c) * Scale(0.02, 0.17, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void matghe() {
-	setMau(0, 0, 0);
-	mat4 instance = Scale(0.3, 0.02, 0.3);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void changhe() {
-	setMau(0, 0, 0);
-	mat4 instance = Translate(0, -0.06, 0) * Scale(0.02, 0.12, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void chanduoi1() {
-	setMau(0, 0, 0);
-	mat4 instance = RotateX(40) * Translate(0, -0.135, 0.06) * Scale(0.02, 0.08, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void chanduoi2() {
-	setMau(0, 0, 0);
-	mat4 instance = RotateX(-40) * Translate(0, -0.135, -0.06) * Scale(0.02, 0.08, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void chanduoi3() {
-	setMau(0, 0, 0);
-	mat4 instance = RotateZ(-40) * Translate(0.06, -0.135, 0) * Scale(0.02, 0.08, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void chanduoi4() {
-	setMau(0, 0, 0);
-	mat4 instance = RotateZ(40) * Translate(-0.06, -0.135, 0) * Scale(0.02, 0.08, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void ghe1() {
-	mat4 vitri = Translate(-2, -1, -2.5);
-	phongto = Scale(3, 3, 3);
-	ctm = vitri * phongto;
-	changhe();
-	chanduoi1();
-	chanduoi2();
-	chanduoi3();
-	chanduoi4();
-	ctm = vitri * phongto * RotateX(Theta[0]) * RotateY(Theta[1]) * Translate(0, i, 0);
-	tualung();
-	tru();
-	matghe();
-	tayvinngang(0.14, 0.155, -0.075);
-	tayvinngang(-0.14, 0.155, -0.075);
-	tayvindoc(0.14, 0.08, 0);
-	tayvindoc(-0.14, 0.08, 0);
-}
-void matban() {
-	setMau(0, 0, 0);
-	mat4 instance = Translate(0, 0, 0) * Scale(0.6, 0.02, 0.3);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void chanban(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 0, 0);
-	mat4 instance = Translate(a, b, c) * Scale(0.03, 0.3, 0.03);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void demt() {
-	setMau(0, 255, 255);
-	mat4 instance = Translate(0, 0.015, 0) * Scale(0.15, 0.03, 0.06);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void trumt() {
-	setMau(0, 255, 255);
-	mat4 instance = Translate(0, 0.045, 0) * Scale(0.03, 0.06, 0.03);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void manhinhmt() {
-	setMau(0, 255, 255);
-	mat4 instance = RotateX(5) * Translate(0, 0.19, 0) * Scale(0.3, 0.25, 0.03);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void ongbut() {
-	setMau(255, 0, 255);
-	mat4 instance = Translate(0.25, 0.05, 0.1) * Scale(0.05, 0.1, 0.05);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void but1() {
-	setMau(255, 0, 0);
-	mat4 instance = RotateX(10) * Translate(0.25, 0.15, 0.1) * Scale(0.01, 0.1, 0.01);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void but2() {
-	setMau(0, 255, 255);
-	mat4 instance = RotateX(-10) * Translate(0.25, 0.1, 0.1) * Scale(0.01, 0.13, 0.01);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void but3() {
-	setMau(0, 255, 0);
-	mat4 instance = RotateX(10) * Translate(0.24, 0.1, 0.1) * Scale(0.01, 0.13, 0.01);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void chuot() {
-	setMau(255, 0, 255);
-	mat4 instance = Translate(-0.24, 0.01, 0) * Scale(0.03, 0.03, 0.05);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_ban * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void banthungan() {
-	mat4 vitri = Translate(-2, -1.5, -1);
-	ctm_ban = vitri * phongto;
-	matban();
-	chanban(0.285, -0.15, -0.135);
-	chanban(-0.285, -0.15, 0.135);
-	chanban(-0.285, -0.15, -0.135);
-	chanban(0.285, -0.15, 0.135);
-	demt();
-	trumt();
-	manhinhmt();
-	ongbut();
-	but1();
-	but2();
-	but3();
-	chuot();
-}
-void matbantb() {
-	setMau(0, 0, 0);
-	mat4 instance = Scale(0.7, 0.02, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_bantb * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void chanbantb(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 0, 0);
-	mat4 instance = Translate(a, b, c) * Scale(0.03, 0.3, 0.03);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_bantb * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void bantrungbay() {
-	mat4 vitri = Translate(2, -1, -1);
-	ctm_bantb = vitri * phongto;
-	matbantb();
-	chanbantb(0.335, -0.15, 0.185);
-	chanbantb(0.335, -0.15, -0.185);
-	chanbantb(-0.335, -0.15, -0.185);
-	chanbantb(-0.335, -0.15, 0.185);
-}
-void banhxe(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(255, 255, 0);
-	for (int z = 0; z < 360; z += 1) {
-		mat4 instance = RotateX(90) * Translate(a, b, c) * RotateY(z) * Scale(0.1, 0.05, 0.1);
-		glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-		glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-	}
-}
-void trucxe(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 255, 0);
-	mat4 instance = Translate(a, b, c) * Scale(0.05, 0.05, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void thungxe() {
-	setMau(0, 255, 0);
-	mat4 instance = Translate(0.15, 0.05, 0.2) * Scale(0.6, 0.1, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void mat1(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 0, 255);
-	mat4 instance = Translate(a, b, c) * Scale(0.02, 0.2, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void matday() {
-	setMau(0, 0, 255);
-	mat4 instance = Translate(0.325, 0.11, 0.2) * Scale(0.25, 0.02, 0.39);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void matben(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 0, 255);
-	mat4 instance = Translate(a, b, c) * Scale(0.22, 0.17, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void matcua(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(255, 0, 255);
-	mat4 instance = Translate(a, b, c) * Scale(0.02, 0.2, 0.39);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void cuatrai(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(255, 0, 255);
-	mat4 instance = Translate(a, b, c) * Scale(0.26, 0.2, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void cuaphai(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(255, 0, 255);
-	mat4 instance = Translate(a, b, c) * Scale(0.26, 0.2, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void mattren() {
-	setMau(255, 0, 255);
-	mat4 instance = Translate(0.02, 0.25, 0.2) * Scale(0.28, 0.02, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xetai1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-GLfloat m = 0, n;
 
-void xetai() {
-	mat4 vitri = Translate(2, -0.8, -1);
-	ctm_xetai1 = vitri * Translate(m, 0, 0);
-	banhxe(0, 0, 0);
-	banhxe(0.3, 0, 0);
-	banhxe(0, 0.4, 0);
-	banhxe(0.3, 0.4, 0);
-	trucxe(0, 0, 0.2);
-	trucxe(0.3, 0, 0.2);
-	thungxe();
-	matben(0.31, 0.17, 0);
-	matben(0.31, 0.17, 0.4);
-	matday();
-	mat1(0.2, 0.15, 0.2);
-	mat1(0.43, 0.15, 0.2);
-	mat1(0.15, 0.15, 0.2);
-	matcua(-0.12, 0.15, 0.2);
-	cuatrai(0.02, 0.15, 0);
-	mattren();
-	ctm_xetai1 = ctm_xetai1 * Translate(-0.14, 0, 0.4) * RotateY(Theta[3]);
-	cuaphai(0.15, 0.14, -0.01);
-}
-void banhxecau(GLfloat a, GLfloat b, GLfloat c) {
-	for (int z = 0; z < 360; z += 1) {
-		mat4 instance = RotateX(90) * Translate(a, b, c) * RotateY(z) * Scale(0.1, 0.05, 0.1);
-		glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xecau * instance);
-		glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-	}
-}
-void thanxecau() {
-	setMau(0, 255, 0);
-	mat4 instance = Translate(0.15, 0.1, 0.2) * Scale(0.6, 0.15, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xecau * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void dauxecau() {
-	setMau(0, 0, 255);
-	mat4 instance = Translate(-0.01, 0.2, 0.2) * Scale(0.25, 0.2, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xecau * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void duoixecau() {
-	setMau(255, 255, 0);
-	mat4 instance = Translate(0, 0.3, 0) * Scale(0.3, 0.23, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xecau * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void truccau() {
-	setMau(0, 255, 0);
-	mat4 instance = RotateZ(-15) * Translate(0, 0.62, 0) * Scale(0.09, 0.4, 0.09);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xecau * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void khucnoi() {
-	setMau(255, 0, 0);
-	mat4 instance = RotateZ(-20) * Translate(-0.01, 0.18, 0) * Scale(0.06, 0.4, 0.06);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xecau * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-
-void day() {
-	setMau(0, 0, 0);
-	mat4 instance = Translate(0.14, 0.18, 0) * Scale(0.02, 0.4, 0.02);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xecau * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void cuchang() {
-	setMau(0, 0, 255);
-	mat4 instance = Translate(0.14, 0, 0) * Scale(0.07, 0.07, 0.07);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_xecau * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void cancau() {
-	mat4 vitri = Translate(1, -0.8, -0.5);
-	ctm_xecau = vitri;
-	banhxecau(0, 0, 0);
-	banhxecau(0.3, 0, 0);
-	banhxecau(0, 0.4, 0);
-	banhxecau(0.3, 0.4, 0);
-	thanxecau();
-	dauxecau();
-	ctm_xecau = ctm_xecau * Translate(0.3, 0, 0.2) * RotateY(Theta[4]);
-	duoixecau();
-	truccau();
-	ctm_xecau = ctm_xecau * Translate(0.22, 0.78, 0) * RotateZ(Theta[5]);
-	khucnoi();
-	day();
-	cuchang();
-
-}
-/* LÊ THị TRANG - ROBOT*/
-void torso()
-{
-	setMau(0, 0, 255);
-	mat4 instance = Translate(0, -0.35, 0) * Scale(0.6, 0.7, 0.3);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void head()
-{
-	setMau(0, 0, 0);
-	mat4 instance = Translate(0, 0.075, 0) * Scale(0.2, 0.15, 0.3);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void upper_arm()
-{
-	setMau(0, 255, 255);
-	mat4 instance = Scale(0.1, 0.3, 0.2);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void lower_arm()
-{
-	setMau(0, 255, 255);
-	mat4 instance = Scale(0.05, 0.3, 0.1);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void upper_leg()
-{
-	setMau(0, 255, 255);
-	mat4 instance = Scale(0.2, 0.45, 0.25);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void lower_leg()
-{
-	setMau(0, 255, 255);
-	mat4 instance = Scale(0.15, 0.35, 0.2);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-mat4 trans, thunho;
-
-void robot()
-{
-	mat4 vitri = Translate(-0.5, -1.5, -2);
-
-	model = vitri * Translate(0, 0.75, 0) * RotateY(theta[0]);
-	trans = model;
-	torso();
-	model = trans * RotateY(theta[1]);
-	head();
-	model = trans * Translate(0, -0.05, 0) * RotateX(theta[2]) * Translate(-0.35, -0.15, 0);
-	upper_arm();
-	model = model * Translate(0, -0.15, 0) * RotateX(theta[3]) * Translate(0, -0.15, 0);
-	lower_arm();
-	model = trans * Translate(0, -0.05, 0) * RotateX(theta[4]) * Translate(0.35, -0.15, 0);
-	upper_arm();
-	model = model * Translate(0, -0.15, 0) * RotateX(theta[5]) * Translate(0, -0.15, 0);
-	lower_arm();
-	model = trans * Translate(0, -0.7, 0) * RotateX(theta[6]) * Translate(-0.15, -0.225, 0);
-	upper_leg();
-	model = model * Translate(0, -0.225, 0) * RotateX(theta[7]) * Translate(0, -0.175, 0);
-	lower_leg();
-	model = trans * Translate(0, -0.7, 0) * RotateX(theta[8]) * Translate(0.15, -0.225, 0);
-	upper_leg();
-	model = model * Translate(0, -0.225, 0) * RotateX(theta[9]) * Translate(0, -0.175, 0);
-	lower_leg();
-}
-/* END - ROBOT*/
-
-
-/* LÊ THẢO VÂN - TỦ TRƯNG BÀY*/
-mat4 ctm_oto;
-mat4 ctm_tu;
-float ctm_tu_delta_y = -0.1;
-void banh(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 0, 255);
-	for (int z = 0; z < 360; z += 1) {
-		mat4 instance = RotateX(90) * Translate(a, b, c) * RotateY(z) * Scale(0.09, 0.05, 0.09);
-		glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_oto * instance);
-		glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-	}
-}
-void dayoto() {
-	setMau(0, 255, 0);
-	mat4 instance = Translate(0.15, 0.1, 0.15) * Scale(0.4, 0.1, 0.3);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_oto * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void dauoto() {
-	setMau(255, 255, 0);
-	mat4 instance = Translate(0.02, 0.175, 0.15) * Scale(0.15, 0.15, 0.3);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_oto * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void duoioto() {
-	setMau(0, 255, 255);
-	mat4 instance = Translate(0.24, 0.175, 0.15) * Scale(0.2, 0.25, 0.3);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_oto * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void oto1() {
-	mat4 vitri = Translate(0.2, 0.18 + ctm_tu_delta_y, -0.15);
-	mat4 thunho = vitri * Scale(0.5, 0.5, 0.5);
-	ctm_oto = thunho * RotateX(Theta[6]);
-	banh(0, 0, 0);
-	banh(0.25, 0, 0);
-	banh(0.25, 0.3, 0);
-	banh(0, 0.3, 0);
-	dayoto();
-	dauoto();
-	duoioto();
-}
-void oto2() {
-	mat4 vitri = Translate(0.7, 0.18 + ctm_tu_delta_y, -0.15);
-	mat4 thunho = vitri * Scale(0.5, 0.5, 0.5);
-	ctm_oto = thunho * RotateX(Theta[6]);
-	banh(0, 0, 0);
-	banh(0.25, 0, 0);
-	banh(0.25, 0.3, 0);
-	banh(0, 0.3, 0);
-	dayoto();
-	dauoto();
-	duoioto();
-}
-void oto3() {
-	mat4 vitri = Translate(0.7, 1.05 + ctm_tu_delta_y, -0.15);
-	mat4 thunho = vitri * Scale(0.5, 0.5, 0.5);
-	ctm_oto = thunho * RotateX(Theta[6]);
-	banh(0, 0, 0);
-	banh(0.25, 0, 0);
-	banh(0.25, 0.3, 0);
-	banh(0, 0.3, 0);
-	dayoto();
-	dauoto();
-	duoioto();
-}
-void oto4() {
-	mat4 vitri = Translate(0.2, 1.05 + ctm_tu_delta_y, -0.15);
-	mat4 thunho = vitri * Scale(0.5, 0.5, 0.5);
-	ctm_oto = thunho * RotateX(Theta[6]);
-	banh(0, 0, 0);
-	banh(0.25, 0, 0);
-	banh(0.25, 0.3, 0);
-	banh(0, 0.3, 0);
-	dayoto();
-	dauoto();
-	duoioto();
-}
-void mattraitu(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0.1, 0.5, 0.2);
-	mat4 instance = Translate(a, b, c) * Scale(0.03, 1, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_tu * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void mattrentu(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 0, 255);
-	mat4 instance = Translate(a, b, c) * Scale(0.6, 0.03, 0.4);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_tu * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-void ke(GLfloat a, GLfloat b, GLfloat c) {
-	setMau(0, 0, 0);
-	mat4 instance = Translate(a, b, c) * Scale(0.2, 0.05, 0.1);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, ctm_tu * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-}
-
-void tu() {
-	mat4 vitri = Translate(0, 0.55 + ctm_tu_delta_y, 1.5);
-	ctm_tu = vitri * RotateY(Theta[2]);
-	mattraitu(0, 0, 0);
-	mattraitu(0.6, 0, 0);
-	mattraitu(0.3, 0, 0);
-	mattrentu(0.3, 0, 0);
-	mattrentu(0.3, 0.485, 0);
-	mattrentu(0.3, -0.485, 0);
-	ke(0.15, 0.03, -0.15);
-	ke(0.45, 0.03, -0.15);
-	ke(0.45, -0.45, -0.15);
-	ke(0.15, -0.45, -0.15);
-	oto1();
-	oto2();
-	oto3();
-	oto4();
-}
-
-void tu2() {
-	mat4 vitri = Translate(-0.7, 0.55 + ctm_tu_delta_y, 1.5);
-	ctm_tu = vitri * RotateY(Theta[2]);
-	mattraitu(0, 0, 0);
-	mattraitu(0.6, 0, 0);
-	mattraitu(0.3, 0, 0);
-	mattrentu(0.3, 0, 0);
-	mattrentu(0.3, 0.485, 0);
-	mattrentu(0.3, -0.485, 0);
-	ke(0.15, 0.03, -0.15);
-	ke(0.45, 0.03, -0.15);
-	ke(0.45, -0.45, -0.15);
-	ke(0.15, -0.45, -0.15);
-}
-/* END TỦ TRUNG BÀY*/
-
-
-/*TÊN LỬA*/
-double cao_than = 2, rong_than = 0.5;
-double dai_canh = 0.5, rong_canh = 0.3, day_canh = 0.02;
-double de = 1;
-mat4 model1;
-void ten_lua() {
-	setMau(0, 0, 255);
-	//than ten lua
-	mat4 instance = Translate(0, cao_than / 2, 0) * Scale(rong_than, cao_than, rong_than);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	//dau ten lua
-	instance = Translate(0, cao_than, 0) * Scale(rong_than / 1.4, rong_than / 1.4, rong_than) * RotateZ(45);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	//canh trai
-	setMau(0, 255, 255);
-	instance = Translate(rong_than - rong_canh / 2, dai_canh / 2, 0) * Scale(rong_canh, dai_canh, day_canh);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	//canh phai
-	setMau(0, 255, 255);
-	instance = Translate(-rong_than + rong_canh / 2, dai_canh / 2, 0) * Scale(rong_canh, dai_canh, day_canh);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	//canh trai
-	setMau(0, 255, 255);
-	instance = RotateY(90) * Translate(rong_than - rong_canh / 2, dai_canh / 2, 0) * Scale(rong_canh, dai_canh, day_canh);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	//canh phai
-	setMau(0, 255, 255);
-	instance = RotateY(90) * Translate(-rong_than + rong_canh / 2, dai_canh / 2, 0) * Scale(rong_canh, dai_canh, day_canh);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void de_be_phong_nho() {
-	setMau(0, 0, 0);
-	mat4 instance = Translate(0, de / 40, 0) * Scale(de / 2, de / 20, de / 2);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void de_be_phong_to() {
-	setMau(0, 255, 0);
-	mat4 instance = Translate(0, 3 * de / 40, 0) * Scale(cao_than, de / 10, de);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-double yy = 0;
-double alpha = 0, beta = 0, gama = 0;
-void gia_do_ten_lua() {
-	setMau(255, 255, 0);
-	mat4 instance = Scale(cao_than + 1.5 * rong_canh, de / 5, de);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	instance = Translate(cao_than / 2 - rong_than / 1.5, de / 5, 0) * Scale(de / 20, rong_canh, 3 * de / 5);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void le_be() {
-	mat4 instance = Scale(0.01, 0.01, de);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model1 * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-
-void be_phong() {
-	mat4 vitri = Translate(0.2, -1, -1);
-	mat4 thunho = Scale(0.25, 0.25, 0.25);
-	model1 = vitri * thunho * Translate(0, -0.6, 0);
-	de_be_phong_nho();
-	model1 *= RotateY(alpha);
-	de_be_phong_to();
-	model1 *= Translate(-cao_than / 2, 3 * de / 40 + de / 10, 0) * RotateZ(beta);
-	le_be();
-	model1 *= Translate((cao_than + 1.5 * rong_canh) / 2, 0, 0);
-	gia_do_ten_lua();
-	model *= RotateZ(-90 + gama) * Translate(-rong_than / 2 - rong_canh, -(cao_than + 1.5 * rong_canh) / 2 + yy, 0);
-	ten_lua();
-
-}
-
-void spinArm(void)
-{
-	theta[2] += 0.01;
-	if (theta[2] > 60) theta[2] -= 120;
-	theta[4] -= 0.01;
-	if (theta[4] < -60) theta[4] += 120;
-	theta[6] += 0.01;
-	if (theta[6] > 30) theta[6] -= 60;
-	theta[7] = 0;
-	theta[8] -= 0.01;
-	if (theta[8] < -30) theta[8] += 60;
-	theta[9] = 0;
-	glutPostRedisplay();
-}
-void sit(void)
-{
-	theta[6] = 90;
-	theta[7] = -90;
-	theta[8] = 90;
-	theta[9] = -90;
-	glutPostRedisplay();
-}
-void unsit(void)
-{
-	theta[2] = 0;
-	theta[4] = 0;
-	theta[6] = 0;
-	theta[7] = 0;
-	theta[8] = 0;
-	theta[9] = 0;
-	glutPostRedisplay();
-}
-
-// BHV
-
-GLfloat fanRotate = 0;
-bool isRorate = true;
-float quat_y = -0.3;
-void fan_display() {
-	setMau(0.4, 0.1, 0.01);
-	mat4 instance = Translate(0, 2 + quat_y, 0.08);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance * Scale(0.1, 0.3 + quat_y, 0.1));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	if (isRorate) {
-		fanRotate += 10;
-	}
-
-	setMau(0.01, 0.5, 0.9);
-	float scale = 0.4;
-	instance = Translate(cos(fanRotate * DegreesToRadians) * scale, 2 + quat_y, sin(fanRotate * DegreesToRadians) * scale) * RotateY(-fanRotate);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance * Scale(1, 0.15, 0.1));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	GLfloat fanRotate1 = fanRotate + 90;
-	instance = Translate(cos(fanRotate1 * DegreesToRadians) * scale, 2 + quat_y, sin(fanRotate1 * DegreesToRadians) * scale) * RotateY(-fanRotate1);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance * Scale(1, 0.15, 0.1));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	fanRotate1 += 90;
-	instance = Translate(cos(fanRotate1 * DegreesToRadians) * scale, 2 + quat_y, sin(fanRotate1 * DegreesToRadians) * scale) * RotateY(-fanRotate1);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance * Scale(1, 0.15, 0.1));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	fanRotate1 += 90;
-	instance = Translate(cos(fanRotate1 * DegreesToRadians) * scale, 2 + quat_y, sin(fanRotate1 * DegreesToRadians) * scale) * RotateY(-fanRotate1);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance * Scale(1, 0.15, 0.1));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-	glutPostRedisplay();
-}
-
-
-float dong_ho_x = 0, dong_ho_y = -0.5;
-
-void dong_ho1()
-{
-	mat4 model_dong_ho = Translate(1 + dong_ho_x, 1 + dong_ho_y, 0) * Scale(1, 1, 1);
-	setMau(0.3, 0.4, 0.5);
-	mat4 instance = model_dong_ho * Translate(1 + dong_ho_x, 1 + dong_ho_y, 0);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance * Scale(1, 1, 0.1));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-	float scale = 0.4;
-
-	for (int i = 0; i < 12; i++)
-	{
-		float angle = i * 30 * DegreesToRadians;
-		setMau(0.8, 0.4, 0.5);
-		instance = model_dong_ho * Translate(sin(angle) * scale, cos(angle) * scale, 0) * RotateZ(i * -30);
-		glUniformMatrix4fv(model_loc, 1, GL_TRUE, model_dong_ho * instance * Scale(0.01, 0.1, 0.2));
-		glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-	}
-
-
-	time_t now = time(0);
-	tm* localTime = localtime(&now);
-
-	int hours = localTime->tm_hour % 12;  // Lấy giờ, giới hạn từ 0 đến 11
-	int minutes = localTime->tm_min;     // Lấy phút
-	int seconds = localTime->tm_sec;     // Lấy giây
-
-	// Tính góc quay cho từng kim
-	float hourAngle = 30.0f * hours - (minutes / 2.0f);  // 360° / 12 = 30° mỗi giờ
-	float minuteAngle = 6.0f * minutes;                 // 360° / 60 = 6° mỗi phút
-	float secondAngle = 6.0f * seconds;
-
-	scale = 0.4;
-	instance = model_dong_ho * Translate(sin(secondAngle * DegreesToRadians) * 0.1, cos(secondAngle * DegreesToRadians) * 0.1, 0) * RotateZ(-secondAngle);
-	setMau(0.7, 0.4, 0.0);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model_dong_ho * instance * Scale(0.01, 0.5, 0.2));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	scale = 0.4;
-	instance = model_dong_ho * Translate(sin(minuteAngle * DegreesToRadians) * 0.1, cos(minuteAngle * DegreesToRadians) * 0.1, 0) * RotateZ(-minuteAngle);
-	setMau(0.1, 0.7, 0.5);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model_dong_ho * instance * Scale(0.01, 0.4, 0.2));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-
-	scale = 0.4;
-	instance = model_dong_ho * Translate(sin(hourAngle * DegreesToRadians) * 0.1, cos(hourAngle * DegreesToRadians) * 0.1, 0) * RotateZ(-hourAngle);
-	setMau(0.1, 0.0, 0.8);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, model_dong_ho * instance * Scale(0.01, 0.4, 0.2));
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-	glutPostRedisplay();
-}
-
-
-void tuongBenTrai() {
-	setMau(0.8, 0.8, 0.8); // Màu xám nhạt
-	mat4 instance = Translate(-4.0, 0.5, 0) * Scale(0.05, 5.0, 5.0);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-
-void tuongPhiaSau() {
-	setMau(0.7, 0.7, 0.7); // Màu xám đậm hơn
-	mat4 instance = Translate(0.0, 0.5, -2.0) * Scale(10.0, 5.0, 0.05);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-
-void tuongBenTren() {
-	setMau(0.9, 0.9, 0.9); // Màu sáng hơn
-	mat4 instance = Translate(0.0, 3.0, 0.0) * Scale(10.0, 0.05, 5.0);
-	glUniformMatrix4fv(model_loc, 1, GL_TRUE, instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-
-void tuong() {
-	tuongBenTrai();
-	tuongPhiaSau();
-	tuongBenTren();
-	glutPostRedisplay();
-}
 void Phong(color4 light_ambient, color4 light_diffuse, color4 light_specular,
 	color4 material_ambient, color4 material_diffuse, color4 material_specular,
 	vec4 light_position, GLfloat material_shininess) {
@@ -968,78 +144,33 @@ void Phong(color4 light_ambient, color4 light_diffuse, color4 light_specular,
 	glUniform4fv(glGetUniformLocation(program, "LightPosition"), 1, light_position);
 	glUniform1f(glGetUniformLocation(program, "Shininess"), material_shininess);
 }
-GLfloat mauAnhSang = 1.0; //Màu của ánh sáng
-void paintColor(GLfloat a, GLfloat b, GLfloat c) {
-	/* Khởi tạo các tham số chiếu sáng - tô bóng*/
-	point4 light_position(0.0, 1.9, 0.0, 0.0);
-	color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-	color4 light_diffuse(mauAnhSang, mauAnhSang, mauAnhSang, 1.0); //màu ánh sáng
-	color4 light_specular(0.0, 0.0, 0.0, 1.0);
 
-	color4 material_ambient(1.0, 0.0, 1.0, 1.0);
-	color4 material_diffuse(a / 255.0, b / 255.0, c / 255.0, 1.0);  //màu bóng
-	color4 material_specular(1.0, 1.0, 1.0, 1.0);
-	float material_shininess = 100.0;
 
-	color4 ambient_product = light_ambient * material_ambient;
-	color4 diffuse_product = light_diffuse * material_diffuse;
-	color4 specular_product = light_specular * material_specular;
-
-	glUniform4fv(glGetUniformLocation(program, "AmbientProduct"), 1, ambient_product);
-	glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"), 1, diffuse_product);
-	glUniform4fv(glGetUniformLocation(program, "SpecularProduct"), 1, specular_product);
-	glUniform4fv(glGetUniformLocation(program, "LightPosition"), 1, light_position);
-	glUniform1f(glGetUniformLocation(program, "Shininess"), material_shininess);
-}
 /* ------------------------------------ DỰNG HÌNH CĂN PHÒNG  ------------------------------------ */
-mat4 model_room, ctm11;
+mat4 model_room, ctm;
 GLfloat xoay_roomx = 0, xoay_roomy = 0, xoay_roomz = 0;
 
 void san()
 {
 	mat4 instance = Translate(0.75f, 0.01f, -1.0f) * Scale(1.5f, 0.02f, 2.0f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_room * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_room * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void tuong_sau()
 {
 	mat4 instance = Translate(0.75f, 0.4f, -0.01f) * Scale(1.5f, 0.8f, 0.02f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_room * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_room * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void tuong_trai()
 {
 	mat4 instance = Translate(-0.01f, 0.4f, -1.0f) * Scale(0.02f, 0.8f, 2.0f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_room * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void tuong_duoi1()
-{
-	mat4 instance = Translate(0.01f, -0.4f, -1.0f) * Scale(0.02f, 0.8f, 2.0f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_room * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void tuong_duoi2()
-{
-	mat4 instance = Translate(0.75f, -0.4f, -0.01f) * Scale(1.5f, 0.8f, 0.02f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_room * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_room * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
-void tuong_duoi3()
-{
-	mat4 instance = Translate(0.75f, -0.4f, -2.0f) * Scale(1.5f, 0.8f, 0.02f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_room * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void tuong_tren3()
-{
-	mat4 instance = Translate(0.75f, 0.4f, -2.0f) * Scale(1.5f, 0.8f, 0.02f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_room * instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
 
 void build_room()
 {
@@ -1056,10 +187,6 @@ void build_room()
 	san();
 	tuong_sau();
 	tuong_trai();
-	tuong_tren3();
-	tuong_duoi1();
-	tuong_duoi2();
-	tuong_duoi3();
 }
 
 /* ------------------------------------ QUẠT TRẦN ------------------------------------ */
@@ -1069,21 +196,21 @@ GLfloat xoay_quaty = 0; //điều khiển quạt
 void truc_dai()
 {
 	mat4 instance = Scale(0.01f, 0.1f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11* model_quat * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_quat * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void truc_quay()
 {
 	mat4 instance = Translate(0.0f, -0.065f, 0.0f) * Scale(0.01f, 0.01f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11* model_quat * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_quat * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void canh_quat(GLfloat x)
 {
 	mat4 instance = RotateY(x) * Translate(0.08f, -0.065f, 0.0f) * Scale(0.15f, 0.01f, 0.03f);
-	glUniformMatrix4fv(model_loc , GL_TRUE, 1, ctm11 * model_quat * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_quat * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1132,21 +259,21 @@ GLfloat di_chuyen_banx = 0, di_chuyen_bany = 0, di_chuyen_banz = 0;
 void mat_ban()
 {
 	mat4 instance = Translate(1.2f, 0.215f, -0.2f) * Scale(0.5f, 0.01f, 0.3f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void chan_ban(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.01f, 0.2f, 0.3f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void thanh_day(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.2f, 0.01f, 0.3f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1186,7 +313,7 @@ void canh(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.19f, 0.08f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_canh_tu_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_canh_tu_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1203,7 +330,7 @@ void tay_cam_tu_ban(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.01f, 0.02f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_canh_tu_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_canh_tu_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1230,7 +357,7 @@ void thanh_ngan(GLfloat x, GLfloat y, GLfloat z) {
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.19f, 0.075f, 0.01);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ngan_keo * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ngan_keo * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1247,7 +374,7 @@ void thanh_dai(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.01f, 0.075f, 0.3f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ngan_keo * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ngan_keo * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1264,7 +391,7 @@ void day(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.185f, 0.01f, 0.295f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ngan_keo * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ngan_keo * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1281,7 +408,7 @@ void tay_cam(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.04f, 0.01f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ngan_keo * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ngan_keo * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1314,7 +441,7 @@ void man_hinh(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.2f, 0.15f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1331,7 +458,7 @@ void than_may_tinh(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.02f, 0.05f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1348,7 +475,7 @@ void chan_may_tinh(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.06f, 0.01f, 0.03f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1372,7 +499,7 @@ void ban_phim(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.25f, 0.01f, 0.08f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1389,7 +516,7 @@ void cay_may_tinh(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.05f, 0.1f, 0.15f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ban * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ban * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1424,7 +551,7 @@ void de_ghe(GLfloat x, GLfloat y, GLfloat z, GLfloat i)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.12f, 0.01f, 0.12f) * RotateY(i);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ghe * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ghe * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1441,7 +568,7 @@ void chan_ghe(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.01f, 0.15f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ghe * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ghe * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1458,7 +585,7 @@ void cho_ngoi(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.2f, 0.01f, 0.2f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ghe * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ghe * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1475,7 +602,7 @@ void tua(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.2f, 0.3f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ghe * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ghe * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1492,7 +619,7 @@ void de_tay(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.02f, 0.01f, 0.2f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ghe * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ghe * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1529,7 +656,7 @@ void nen_tranh(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.01f, 0.3f, 0.6f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tranh * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tranh * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1546,7 +673,7 @@ void thanh1(GLfloat x, GLfloat y, GLfloat z, GLfloat a)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * RotateX(a) * Scale(0.03f, 0.1f, 0.03f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tranh * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tranh * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1570,42 +697,42 @@ GLfloat di_chuyen_tu_quan_aox = 0, di_chuyen_tu_quan_aoy = 0, di_chuyen_tu_quan_
 void mat_sau(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.8f, 0.6f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11* model_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void chan_tu(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.01f, 0.6f, 0.3f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void mat_tren(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.8f, 0.01f, 0.3f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void thanh_treo(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.79f, 0.01f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm * model_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void thanh_doc(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.05f, 0.6f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void thanh_ngang(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.7f, 0.03f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1637,27 +764,25 @@ GLfloat quay_canh_phai_tu_quan_ao = 0;
 void canh_tu_quan_ao(GLfloat x, GLfloat y, GLfloat z, mat4 modelx)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.35f, 0.37f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * modelx * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * modelx * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void tay_cam_tu_quan_ao(GLfloat x, GLfloat y, GLfloat z, mat4 modelx)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.01f, 0.04f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * modelx * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * modelx * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void canh_trai()
 {
-	paintColor(0, 250, 100);
 	canh_tu_quan_ao(0.245f, 0.39f, -0.36f, model_canh_trai);
 	tay_cam_tu_quan_ao(0.4f, 0.39f, -0.365f, model_canh_trai);
 }
 
 void canh_phai()
 {
-	paintColor(0, 250, 100);
 	canh_tu_quan_ao(0.595f, 0.39f, -0.36f, model_canh_phai);
 	tay_cam_tu_quan_ao(0.44f, 0.39f, -0.365f, model_canh_phai);
 }
@@ -1670,28 +795,28 @@ GLfloat di_chuyen_ngan_keo_tu_quan_aoz = 0;
 void thanh_ngang_ngan_keo(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.7f, 0.185f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ngan_keo_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ngan_keo_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void thanh_doc_ngan_keo(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.01f, 0.185f, 0.24f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11* model_ngan_keo_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ngan_keo_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void day_ngan_keo_tu_quan_ao(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.68f, 0.01f, 0.23f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ngan_keo_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ngan_keo_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void tay_cam_ngan_keo_tu_quan_ao(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.04f, 0.01f, 0.01f);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_ngan_keo_tu_quan_ao * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_ngan_keo_tu_quan_ao * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1722,26 +847,26 @@ void tu_quan_ao()
 mat4 model_giuong, model_goi1, model_goi2;
 
 GLfloat xoay_demY = 0, xoay_demX = 0, goi1 = 0, goi2 = 0;
-GLfloat  zz = 0, yy1 = 0, xx = 0, aa = 0, di_chuyen_demX = 0, di_chuyen_demZ = 0, di_chuyen_demY = 0;
+GLfloat  zz = 0, yy = 0, xx = 0, aa = 0, di_chuyen_demX = 0, di_chuyen_demZ = 0, di_chuyen_demY = 0;
 
 void ThanGiuong()
 {
 	mat4 instance = Translate(0, 0, 0) * Scale(0.8, 0.2, 0.8);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_giuong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_giuong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void ChanGiuong(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.05, 0.25, 0.05);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_giuong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_giuong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void ThanhGiuong(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.8, 0.2, 0.05);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_giuong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_giuong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1758,7 +883,7 @@ void DemGiuong()
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(0, 0.125, 0) * Scale(0.76, 0.05, 0.76);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_giuong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_giuong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1776,7 +901,7 @@ void Goi1(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.25, 0.05, 0.15);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_goi1 * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_goi1 * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1794,7 +919,7 @@ void Goi2(GLfloat x, GLfloat y, GLfloat z)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * Scale(0.25, 0.05, 0.15);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_goi2 * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_goi2 * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1820,7 +945,7 @@ void KhungGiuong()
 }
 void Giuong()
 {
-	model_giuong = model_room * Translate(xx + 0.4, yy1 + 0.2, zz - 1.2) * Scale(0.9) * RotateY(aa - 90);
+	model_giuong = model_room * Translate(xx + 0.4, yy + 0.2, zz - 1.2) * Scale(0.9) * RotateY(aa - 90);
 	KhungGiuong();
 	model_giuong = model_giuong * Translate(di_chuyen_demX, di_chuyen_demY, di_chuyen_demZ) * Translate(0, 0.1, -di_chuyen_demZ - 0.4) * RotateX(xoay_demX) * Translate(0, -0.1, di_chuyen_demZ + 0.4) * RotateY(xoay_demY);
 	DemGiuong();
@@ -1840,7 +965,7 @@ mat4 model_NKTuGiuong, model_CanhTuGiong;
 void DayTu(GLfloat x)
 {
 	mat4 instance = Translate(0, x, 0) * Scale(0.2, 0.01, 0.2);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tuDen * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tuDen * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1848,7 +973,7 @@ void DayTu(GLfloat x)
 void ThanhTu(GLfloat x, GLfloat y, GLfloat z, GLfloat a)
 {
 	mat4 instance = Translate(x, y, z) * RotateY(a) * Scale(0.2, 0.3, 0.01);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tuDen * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tuDen * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1866,14 +991,14 @@ void CanhTu()
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(0, 0.05, -0.1) * Scale(0.2, 0.2, 0.01);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_CanhTuGiong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_CanhTuGiong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void ChanTu(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.02, 0.3, 0.02);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_tuDen * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_tuDen * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1890,7 +1015,7 @@ void TayCam(GLfloat x, GLfloat y, GLfloat z, GLfloat a)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * RotateZ(a) * Scale(0.01, 0.05, 0.02);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_CanhTuGiong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_CanhTuGiong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1923,7 +1048,7 @@ void ThanTu()
 void ThanhNganKeoTuG(GLfloat x, GLfloat y, GLfloat z)
 {
 	mat4 instance = Translate(x, y, z) * Scale(0.01, 0.04, 0.2);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_NKTuGiuong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_NKTuGiuong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -1940,14 +1065,14 @@ void MatNganKeo()
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(0, 0.2, -0.1) * Scale(0.2, 0.1, 0.01);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_NKTuGiuong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_NKTuGiuong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
 void DayTu1(GLfloat x)
 {
 	mat4 instance = Translate(0, x, 0) * Scale(0.2, 0.01, 0.2);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_NKTuGiuong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_NKTuGiuong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 void TayCam1(GLfloat x, GLfloat y, GLfloat z, GLfloat a)
@@ -1963,7 +1088,7 @@ void TayCam1(GLfloat x, GLfloat y, GLfloat z, GLfloat a)
 		200.0                         // material_shininess
 	);
 	mat4 instance = Translate(x, y, z) * RotateZ(a) * Scale(0.01, 0.05, 0.02);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_NKTuGiuong * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_NKTuGiuong * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -2014,7 +1139,7 @@ void than1_dong_ho(GLfloat x)
 		200.0                         // material_shininess
 	);
 	mat4 instance = RotateZ(x) * Scale(0.2, 0.1, 0.05);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_dong_ho * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_dong_ho * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -2031,7 +1156,7 @@ void canh_dong_ho(GLfloat x)
 		200.0                         // material_shininess
 	);
 	mat4 instance = RotateZ(x) * Translate(0, 0.11, 0) * Scale(0.14, 0.02, 0.06);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_dong_ho * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_dong_ho * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -2048,7 +1173,7 @@ void vach_dong_ho(GLfloat x)
 		200.0                         // material_shininess
 	);
 	mat4 instance = RotateZ(x) * Translate(0.07, 0, -0.03) * Scale(0.015, 0.008, 0.01);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_dong_ho * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_dong_ho * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -2065,7 +1190,7 @@ void kim1_dong_ho(GLfloat x)
 		200.0                         // material_shininess
 	);
 	mat4 instance = RotateZ(x + 5 * (6 * (kim / 21600))) * Translate(0.03, 0, -0.03) * Scale(0.06, 0.008, 0.01);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_dong_ho * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_dong_ho * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 void kim2_dong_ho(GLfloat x)
@@ -2081,7 +1206,7 @@ void kim2_dong_ho(GLfloat x)
 		200.0                         // material_shininess
 	);
 	mat4 instance = RotateZ(x + 6 * (kim / 360)) * Translate(0.035, 0, -0.03) * Scale(0.07, 0.006, 0.006);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_dong_ho * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_dong_ho * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -2098,7 +1223,7 @@ void kim3_dong_ho(GLfloat x)
 		200.0                         // material_shininess
 	);
 	mat4 instance = RotateZ(x + (kim)) * Translate(0.035, 0, -0.03) * Scale(0.07, 0.004, 0.004);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm11 * model_dong_ho * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm * model_dong_ho * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 }
 
@@ -2184,16 +1309,39 @@ vec4 at = vec4(0, 0, 0, 1);
 vec4 up = vec4(0, 1, 0, 1);
 
 //xe tăng
-mat4 ctm1 = ctm11;
+mat4 ctm1 = ctm;
+GLfloat mauAnhSang = 1.0; //Màu của ánh sáng
+void paintColor(GLfloat a, GLfloat b, GLfloat c) {
+	/* Khởi tạo các tham số chiếu sáng - tô bóng*/
+	point4 light_position(0.0, 1.9, 0.0, 0.0);
+	color4 light_ambient(0.2, 0.2, 0.2, 1.0);
+	color4 light_diffuse(mauAnhSang, mauAnhSang, mauAnhSang, 1.0); //màu ánh sáng
+	color4 light_specular(0.0, 0.0, 0.0, 1.0);
+
+	color4 material_ambient(1.0, 0.0, 1.0, 1.0);
+	color4 material_diffuse(a / 255.0, b / 255.0, c / 255.0, 1.0);  //màu bóng
+	color4 material_specular(1.0, 1.0, 1.0, 1.0);
+	float material_shininess = 100.0;
+
+	color4 ambient_product = light_ambient * material_ambient;
+	color4 diffuse_product = light_diffuse * material_diffuse;
+	color4 specular_product = light_specular * material_specular;
+
+	glUniform4fv(glGetUniformLocation(program, "AmbientProduct"), 1, ambient_product);
+	glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"), 1, diffuse_product);
+	glUniform4fv(glGetUniformLocation(program, "SpecularProduct"), 1, specular_product);
+	glUniform4fv(glGetUniformLocation(program, "LightPosition"), 1, light_position);
+	glUniform1f(glGetUniformLocation(program, "Shininess"), material_shininess);
+}
 mat4 instance, instance_tank;
 
-GLfloat theta1[] = { 60, 0, -60,0,0 };
-GLfloat n1, m1, o_tank;
+GLfloat theta[] = { 60, 0, -60,0,0 };
+GLfloat n, m, o_tank;
 
 void cube(GLfloat w, GLfloat h, GLfloat d)
 {
 	instance = Scale(w, h, d);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm1 * instance_tank * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm1 * instance_tank * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 
 }
@@ -2202,7 +1350,7 @@ void banhxe(GLfloat w, GLfloat h)
 	for (float i = 0; i < 360; i += 30)
 	{
 		instance = RotateZ(i) * Scale(w, h, 0.1);
-		glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm1 * instance_tank * instance);
+		glUniformMatrix4fv(model, GL_TRUE, 1, ctm1 * instance_tank * instance);
 		glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 	}
 }
@@ -2247,34 +1395,34 @@ void tank()
 	instance_tank = Translate(0, 0.15, 0.275);
 	cube(1, 0.1, 0.25);
 	paintColor(00, 00, 00);
-	instance_tank = Translate(-0.4f, -0.05f, 0.3f) * RotateZ(theta1[4]);
+	instance_tank = Translate(-0.4f, -0.05f, 0.3f) * RotateZ(theta[4]);
 	banhxe(0.1f, 0.2f);
-	instance_tank = Translate(-0.15f, -0.1f, 0.3f) * RotateZ(theta1[4]);
+	instance_tank = Translate(-0.15f, -0.1f, 0.3f) * RotateZ(theta[4]);
 	banhxe(0.2f, 0.2f);
-	instance_tank = Translate(0.15f, -0.1f, 0.3f) * RotateZ(theta1[4]);
+	instance_tank = Translate(0.15f, -0.1f, 0.3f) * RotateZ(theta[4]);
 	banhxe(0.2f, 0.2f);
-	instance_tank = Translate(0.4f, -0.05f, 0.3f) * RotateZ(theta1[4]);
+	instance_tank = Translate(0.4f, -0.05f, 0.3f) * RotateZ(theta[4]);
 	banhxe(0.1f, 0.2f);
 
-	instance_tank = Translate(-0.4f, -0.05f, -0.3f) * RotateZ(theta1[4]);
+	instance_tank = Translate(-0.4f, -0.05f, -0.3f) * RotateZ(theta[4]);
 	banhxe(0.1f, 0.2f);
-	instance_tank = Translate(-0.15f, -0.1f, -0.3f) * RotateZ(theta1[4]);
+	instance_tank = Translate(-0.15f, -0.1f, -0.3f) * RotateZ(theta[4]);
 	banhxe(0.2f, 0.2f);
-	instance_tank = Translate(0.15f, -0.1f, -0.3f) * RotateZ(theta1[4]);
+	instance_tank = Translate(0.15f, -0.1f, -0.3f) * RotateZ(theta[4]);
 	banhxe(0.2f, 0.2f);
-	instance_tank = Translate(0.4f, -0.05f, -0.3f) * RotateZ(theta1[4]);
+	instance_tank = Translate(0.4f, -0.05f, -0.3f) * RotateZ(theta[4]);
 	banhxe(0.1f, 0.2f);
 }
 void phao(GLfloat w, GLfloat l, GLfloat h)
 {
 	instance = Scale(w, l, h);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm1 * instance_tank * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm1 * instance_tank * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 
 }
 void phao2(GLfloat w, GLfloat l, GLfloat h) {
 	instance = Scale(w, h, l) * Translate(0.0, 0.45, 0.0);
-	glUniformMatrix4fv(model_loc, GL_TRUE, 1, ctm1 * instance_tank * instance);
+	glUniformMatrix4fv(model, GL_TRUE, 1, ctm1 * instance_tank * instance);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
 
 }
@@ -2287,10 +1435,10 @@ void bephao() {
 	instance_tank = Translate(0.275f, 0.45f, 0.0f);
 	phao(0.15f, 0.15f, 0.15f);
 	paintColor(100, 250, 100);
-	instance_tank = Translate(0.275f, 0.45f, 0.0f) * RotateZ(theta1[2]);
+	instance_tank = Translate(0.275f, 0.45f, 0.0f) * RotateZ(theta[2]);
 	phao2(0.07f, 0.07f, 0.6);
 	paintColor(200, 250, 200);
-	instance_tank = Translate(0.275f, 0.45f, 0.0f) * RotateZ(theta1[2]) * Translate(0.0f, n, 0.0f);
+	instance_tank = Translate(0.275f, 0.45f, 0.0f) * RotateZ(theta[2]) * Translate(0.0f, n, 0.0f);
 	phao2(0.06f, 0.06f, 0.1);
 	paintColor(0, 250, 100);
 	instance_tank = Translate(0.275f, 0.55f, 0.0f);
@@ -2308,7 +1456,7 @@ void bephao() {
 }
 void banphao(void)
 {
-	n1 += 0.03;
+	n += 0.03;
 	glutPostRedisplay();
 }
 bool xeTangMau;
@@ -2316,289 +1464,194 @@ void xetang(GLfloat w, GLfloat e, GLfloat r, bool xeMau)
 {
 	if (xeMau) {
 		ctm1 = Translate(-0.13, -0.48, -0.1) * RotateY(-30) * Scale(0.3, 0.3, 0.3);
-		ctm1 = ctm1 * Translate(m, 0.0f, o_tank) * RotateY(theta1[1]);
+		ctm1 = ctm1 * Translate(m, 0.0f, o_tank) * RotateY(theta[1]);
 		tank();
-		ctm1 = ctm1 * RotateY(theta1[3]);
+		ctm1 = ctm1 * RotateY(theta[3]);
 		bephao();
 	}
 	else {
 		ctm1 = Translate(w, e, r) * Scale(0.3, 0.3, 0.3);
-		ctm1 = ctm1 * Translate(m, 0.0f, o_tank) * RotateY(theta1[1]);
+		ctm1 = ctm1  * Translate(m, 0.0f, o_tank) * RotateY(theta[1]);
 		tank();
-		ctm1 = ctm1 * RotateY(theta1[3]);
+		ctm1 = ctm1 * RotateY(theta[3]);
 		bephao();
 	}
 
 
 
-}
-void btl() {
-	ghe1();
-	banthungan();
-	bantrungbay();
-	xetai();
-	cancau();
-	robot();
-	be_phong();
-	tu();
-	tu2();
-	fan_display();
-	dong_ho1();
-	//tuong();
 }
 void display(void)
 {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	ctm11 = Scale(6) * Translate(0.0f, 0.49f, -0.48f)*RotateY(-90);
-	bedroom();
-	ctm1 = Scale(10);
-	xetang(0, 0.1, -1, xeTangMau);
-	btl();
-	
-	const vec3 viewer_pos(0.0, 0.0, 2.0);  /*Trùng với eye của camera*/
-	glutSwapBuffers();
+	ctm = Scale(1.5);
+	ctm1 = Scale(2.5);
+	mat4 mv = LookAt(eye, at, up);
+	glUniformMatrix4fv(view, 1, GL_TRUE, mv);
 
+	mat4 p = Frustum(l, r, bottom, top, zNear, zFar);
+	glUniformMatrix4fv(projection, 1, GL_TRUE, p);
+	bedroom();
+	xetang(0, 0.1, -1, xeTangMau);
+	
+	glutSwapBuffers();
 }
-float cam_x = 0, cam_y = 0;
+
 void reshape(int width, int height)
 {
-	vec4 eye(0, 1, 4, 1);
-	vec4 at(0, 0, 0, 1);
-	vec4 up(0, 3, 0, 3);
-
-	view = LookAt(eye, at, up);
-	glUniformMatrix4fv(view_loc, 1, GL_TRUE, view);
-
-	projection = Frustum(-2, 2, -2, 2, 1, 100);
-	glUniformMatrix4fv(projection_loc, 1, GL_TRUE, projection);
-
 	glViewport(0, 0, width, height);
 }
-// r đó kiểu mà để chỗ vẽ tầng 2 í hoặc góc nhìn như này được k
 
-void update_camera()
-{
-	vec4 eye(0, 1 + cam_y, 4 + cam_x, 1);
-	vec4 at(0, 0 + cam_y, 0 + cam_x, 1);
-	vec4 up(0, 1, 0, 1);
-
-	view = LookAt(eye, at, up);
-	glUniformMatrix4fv(view_loc, 1, GL_TRUE, view);
-
-	projection = Frustum(-2, 2, -2, 2, 1, 100);
-	glUniformMatrix4fv(projection_loc, 1, GL_TRUE, projection);
-}
 
 void keyboard(unsigned char key, int x, int y)
 {
+	vec4 cam_forward = normalize(eye - at);
+	vec4 cam_right = normalize(cross(cam_forward, up));
+	vec4 cam_up = normalize(cross(cam_right, cam_forward));
+
 	// keyboard handler
-	//cout << "key " << key << endl;
+
 	switch (key) {
 	case 033:			// 033 is Escape key octal value
 		exit(1);		// quit program
 		break;
+
+	
+	
 	case 'a':
-		Theta[0] += 5;
-		glutPostRedisplay();
-		break;
-	case 's':
-		Theta[1] += 5;
-		glutPostRedisplay();
-		break;
-	case 'd':
-		Theta[4] += 5;
-		glutPostRedisplay();
-		break;
-	case 'f':
-		Theta[5] -= 5;
-		glutPostRedisplay();
-		break;
-	case '2':
-		Theta[6] -= 5;
-		glutPostRedisplay();
-		break;
-	case 'h':
-		if (i < 0.02)
-			i += 0.01;
-		glutPostRedisplay();
-		break;
-	case 'H':
-		if (i > 0)
-			i -= 0.01;
-		glutPostRedisplay();
-		break;
-	case 'g':
-		if ((Theta[3] >= -90)) {
-			Theta[3] -= 5;
+		if (o_tank > 2.5) {
+			o_tank -= 0.05;
+		}
+		else {
+			o_tank += 0;
+		}
+	case 'A':
+		if (o_tank < 3) {
+			o_tank += 0.05;
+		}
+		else {
+			o_tank += 0;
+		}
+	case 'b': // đi sang phai
+		if (m < 2.5) {
+			m += 0.05f;
+			theta[4] -= 10;
+		}
+		else {
+			m += 0;
+			theta[4] -= 0;
 		}
 		glutPostRedisplay();
 		break;
-	case 'G':
-		if ((Theta[3] < 0)) {
-			Theta[3] += 5;
+	case 'B': // di sang trái
+		if (m > -1.3) {
+			m -= 0.05f;
+			theta[4] += 10;
+		}
+		else {
+			m += 0;
+			theta[4] += 0;
 		}
 		glutPostRedisplay();
 		break;
-	case 'j':
-		if (m < 0.5)
-			m += 0.01;
-		glutPostRedisplay();
-		break;
-	case 'J':
-		if (m > 0)
-			m -= 0.01;
-		glutPostRedisplay();
-		break;
-		/*---------------------- -*/
-	case 'z':
-		theta[0] += 5;
-		if (theta[0] > 360) theta[0] -= 360;
-		glutPostRedisplay();
-		break;
-	case 'x':
-		theta[1] += 5;
+	case 'c':// xoay trái
+		// một số lệnh
+		theta[1] += 10;
 		if (theta[1] > 360) theta[1] -= 360;
 		glutPostRedisplay();
 		break;
-	case 'c':
-		glutIdleFunc(spinArm);
+	case 'C': // xoay phải
+		// một số lệnh
+		theta[1] -= 5;
+		if (theta[1] > 360) theta[1] -= 360;
+		glutPostRedisplay();
 		break;
-	case 'v':
+	case 'd':// nâng pháo
+		// một số lệnh
+		if (theta[2] < 90) theta[2] += 5;;
+		glutPostRedisplay();
+		break;
+
+	case 'D':// hạ pháo
+		// một số lệnh
+		if (theta[2] > -90) theta[2] -= 5;;
+		glutPostRedisplay();
+		break;
+	case 'e': // xoay be phao
+		// một số lệnh
 		theta[3] += 5;
-		if (theta[3] > 150) theta[3] -= 150;
-		glutPostRedisplay();
-		break;
-	case 'b':
-		theta[5] += 5;
-		if (theta[5] > 150) theta[5] -= 150;
-		glutPostRedisplay();
-		break;
-	case 'n':
-		theta[5] += 5;
-		if (theta[5] > 150) theta[5] -= 150;
-		glutPostRedisplay();
-		break;
-	case 'q':
-		glutIdleFunc(sit);
-		break;
-	case 'N':
-		glutIdleFunc(unsit);
-		break;
-	case 'm':
-		theta[7] += 5;
-		if (theta[7] > 60) theta[7] -= 60;
-		glutPostRedisplay();
-		break;
-	case 'M':
-		theta[9] += 5;
-		if (theta[9] > 60) theta[9] -= 60;
-		glutPostRedisplay();
-		break;
-		/*--------------------TỦ--------------*/
-	case '1':
-		Theta[2] += 5;
-		glutPostRedisplay();
-		break;
-		/*--------TÊN LỬA------------*/
-	// Quay đế
-	case 'e':
-		alpha += 10;
-		glutPostRedisplay();
-		break;
-	case 'r':
-		alpha -= 10;
-		glutPostRedisplay();
-		break;
-		//nâng giá tên lửa
-	case 't':
-		beta += 10;
-		if (beta >= 60) beta = 60;
-		glutPostRedisplay();
-		break;
-	case 'T':
-		beta -= 10;
-		if (beta <= 0) beta = 0;
-		glutPostRedisplay();
-		break;
-		//Phóng tên
-	case 'y':
-		yy += cao_than;
-		gama -= 5;
-		if (gama * -1 > beta + 10) {
-			yy = 0;
-			gama = 0;
-		}
-		glutPostRedisplay();
-		break;
-	case '9':
-		isRorate = !isRorate;
-		glutPostRedisplay();
-		break;
-
-	case '4':
-		dong_ho_x += 0.1;
-		glutPostRedisplay();
-		break;
-	case '5':
-		dong_ho_x -= 0.1;
-		glutPostRedisplay();
-		break;
-	case '6':
-		dong_ho_y += 0.1;
-		glutPostRedisplay();
-		break;
-	case '7':
-		dong_ho_y -= 0.1;
+		if (theta[3] > 360) theta[3] -= 360;
 		glutPostRedisplay();
 		break;
 
 
-	case '/':
-		cam_x += 0.5;
+
+	case 'E': // xoay be phao
+		// một số lệnh
+		theta[3] -= 5;
+		if (theta[3] > 360) theta[3] = 0;
 		glutPostRedisplay();
 		break;
-	case '*':
-		cam_x -= 0.5;
+		break;
+	case '0': // ban phao
+		glutIdleFunc(banphao);
+		break;
+
+	case 'f':
+		che_do_chi_tiet = !che_do_chi_tiet;
 		glutPostRedisplay();
 		break;
-	case '-':
-		cam_y += 0.5;
+
+	case 'F':
+		eye = eye - cam_forward * (che_do_chi_tiet ? 0.1 : 1);
 		glutPostRedisplay();
 		break;
-	case '+':
-		cam_y -= 0.5;
+	case 'g':
+		eye = eye + cam_forward * (che_do_chi_tiet ? 0.1 : 1);
 		glutPostRedisplay();
 		break;
-	
-	
-	
+	case 'G':
+		eye = eye - cam_right * (che_do_chi_tiet ? 0.1 : 1);
+		glutPostRedisplay();
+		break;
+	case 'h':
+		eye = eye + cam_right * (che_do_chi_tiet ? 0.1 : 1);
+		glutPostRedisplay();
+		break;
+	case 'H':
+		eye = eye - cam_up * (che_do_chi_tiet ? 0.1 : 1);
+		glutPostRedisplay();
+		break;
+	case 'i':
+		eye = eye + cam_up * (che_do_chi_tiet ? 0.1 : 1);
+		glutPostRedisplay();
+		break;
 
 		//công tắc quạt
-	case 'B':
+	case 'I':
 		checked = !checked;   // thay đổi giá trị true - false
 		glutPostRedisplay();
 		break;
 
-	case 'C':
+	case 'j':
 		xoay_quaty += 5;
 		glutPostRedisplay();
 		break;
 
 		//điều khiển bàn
-	case 'i':
+	case 'J':
 		di_chuyen_banx -= 0.05f;
 		if (di_chuyen_banx < -0.1f) di_chuyen_banx = -0.1f;
 		glutPostRedisplay();
 		break;
 
-	case 'I':
+	case 'k':
 		di_chuyen_banx += 0.05f;
 		if (di_chuyen_banx > 0.0f) di_chuyen_banx = 0.0f;
 		glutPostRedisplay();
 		break;
 
-	case 'k':
+	case 'K':
 		if (di_chuyenx < -0.4f) {
 			if (xx < 0.2f) {
 				if (di_chuyen_demZ >= -0.2f) {
@@ -2622,7 +1675,7 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case 'K':
+	case 'l':
 		if (di_chuyenx < -0.4f) {
 			if (xx < 0.2f) {
 				if (di_chuyen_demZ >= -0.2f) {
@@ -2653,7 +1706,7 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 
 		//cánh tủ bàn
-	case 'l': //mở cánh tủ
+	case 'L': //mở cánh tủ
 		if (di_chuyenx < 0.0f && di_chuyenx > -0.5f) {
 			mo_canh_tu_ban = 0;
 		}
@@ -2668,14 +1721,14 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case 'L': //đóng cánh tủ
+	case 'm': //đóng cánh tủ
 		mo_canh_tu_ban -= 5;
 		if (mo_canh_tu_ban < 0) mo_canh_tu_ban = 0;
 		glutPostRedisplay();
 		break;
 
 		//ngăn kéo bàn
-	case 'o': //kéo ngăn kéo ra
+	case 'M': //kéo ngăn kéo ra
 		if (di_chuyenx < 0.0f && di_chuyenx > -0.5f) {
 			if (di_chuyenz <= -0.2f) {
 				keo_ngan_keo_banz -= 0.1f;
@@ -2693,14 +1746,14 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case 'O': //đẩy ngăn kéo vào
+	case 'n': //đẩy ngăn kéo vào
 		keo_ngan_keo_banz += 0.1f;
 		if (keo_ngan_keo_banz > 0) keo_ngan_keo_banz = 0;
 		glutPostRedisplay();
 		break;
 
 		//di chuyển ghế
-	case 'p': // kéo ghế ra
+	case 'N': // kéo ghế ra
 		di_chuyenz -= 0.1f;
 		if (xx > 0.4f && di_chuyenz < -0.2f) {
 			di_chuyenz = -0.2f;
@@ -2711,7 +1764,7 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case 'P': // đẩy ghế vào
+	case 'o': // đẩy ghế vào
 		if (xx > 0.4f && di_chuyenz <= -1.2f) {
 			di_chuyenz = -1.2f;
 		}
@@ -2726,7 +1779,7 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case 'w': //kéo ghế sang phải
+	case 'O': //kéo ghế sang phải
 		if (keo_ngan_keo_banz < 0.0f && di_chuyenx == 0.0f) {
 			di_chuyenx = 0.0f;
 		}
@@ -2744,7 +1797,7 @@ void keyboard(unsigned char key, int x, int y)
 		}
 		glutPostRedisplay();
 		break;
-	case 'W': //kéo ghế sang trái
+	case 'p': //kéo ghế sang trái
 		if (keo_ngan_keo_banz < 0.0f) {
 			di_chuyenx += 0.1f;
 			if (di_chuyenx > -0.5f) di_chuyenx = -0.5f;
@@ -2765,90 +1818,90 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 
 		//quay ghế
-	case '.':
+	case 'P':
 		quay_ghe += 5;
 		glutPostRedisplay();
 		break;
 
-	case '>':
+	case 'q':
 		quay_ghe -= 5;
 		glutPostRedisplay();
 		break;
 
 		// di chuyển tranh
-	case ',':
+	case 'Q':
 		di_chuyen_tranhz -= 0.1f;
 		if (di_chuyen_tranhz < -0.2f) di_chuyen_tranhz = -0.2f;
 		glutPostRedisplay();
 		break;
 
-	case '<':
+	case 'r':
 		di_chuyen_tranhz += 0.1f;
 		if (di_chuyen_tranhz > 0.4f) di_chuyen_tranhz = 0.4f;
 		glutPostRedisplay();
 		break;
 
 		//di chuyển tủ quần áo
-	case '{':
+	case 'R':
 		di_chuyen_tu_quan_aox += 0.1f;
 		if (di_chuyen_tu_quan_aox > 0.1f) di_chuyen_tu_quan_aox = 0.1f;
 		glutPostRedisplay();
 		break;
 
-	case '}':
+	case 's':
 		di_chuyen_tu_quan_aox -= 0.1f;
 		if (di_chuyen_tu_quan_aox < 0.0f) di_chuyen_tu_quan_aox = 0.0f;
 		glutPostRedisplay();
 		break;
 
 		//điều khiển cánh trái tủ quần áo
-	case '[': //mở
+	case 'S': //mở
 		quay_canh_phai_tu_quan_ao -= 5;
 		if (quay_canh_phai_tu_quan_ao < -90) quay_canh_phai_tu_quan_ao = -90;
 		glutPostRedisplay();
 		break;
-	case ']': //đóng
+	case 't': //đóng
 		quay_canh_phai_tu_quan_ao += 5;
 		if (quay_canh_phai_tu_quan_ao > 0) quay_canh_phai_tu_quan_ao = 0;
 		glutPostRedisplay();
 		break;
 
 		//điều khiển cánh phải tủ quần áo
-	case 'u':
+	case 'T':
 		quay_canh_trai_tu_quan_ao += 5;
 		if (quay_canh_trai_tu_quan_ao > 90) quay_canh_trai_tu_quan_ao = 90;
 		glutPostRedisplay();
 		break;
-	case 'U':
+	case 'u':
 		quay_canh_trai_tu_quan_ao -= 5;
 		if (quay_canh_trai_tu_quan_ao < 0) quay_canh_trai_tu_quan_ao = 0;
 		glutPostRedisplay();
 		break;
 
 		//điều khiển ngắn kéo tủ quần áo
-	case '0': //kéo ra
+	case 'U': //kéo ra
 		di_chuyen_ngan_keo_tu_quan_aoz -= 0.1f;
 		if (di_chuyen_ngan_keo_tu_quan_aoz < -0.2f) di_chuyen_ngan_keo_tu_quan_aoz = -0.2f;
 		if (di_chuyenx < -0.5f) di_chuyen_ngan_keo_tu_quan_aoz = 0.0f;
 		glutPostRedisplay();
 		break;
 
-	case ')': //đẩy vào
+	case 'v': //đẩy vào
 		di_chuyen_ngan_keo_tu_quan_aoz += 0.1f;
 		if (di_chuyen_ngan_keo_tu_quan_aoz > 0.0f) di_chuyen_ngan_keo_tu_quan_aoz = 0.0f;
 		glutPostRedisplay();
 		break;
 
 		//điều khiển giường
-	case '#'://quay đệm Y
+	case 'V'://quay đệm Y
 		if (di_chuyen_demZ < -0.2) xoay_demY += 5;
 		glutPostRedisplay();
 		break;
-	case '$':
+	case 'w':
 		if (di_chuyen_demZ < -0.2) xoay_demY -= 5;
 		glutPostRedisplay();
 		break;
-	case '%'://quay đệm Z
+	case 'W'://quay đệm Z
 		if (di_chuyen_demZ < -0.4 && di_chuyen_demY > -0.27)
 		{
 			if (xoay_demX < -35 + di_chuyen_demZ * xoay_demX + 5) xoay_demX = -35 + di_chuyen_demZ * xoay_demX, goi1 = -0.5, goi2 = -0.5;
@@ -2866,7 +1919,7 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case '^':
+	case 'x':
 		if (di_chuyen_demZ < -0.4)
 		{
 			xoay_demX += 5;
@@ -2881,22 +1934,22 @@ void keyboard(unsigned char key, int x, int y)
 		if (di_chuyen_demZ > -0.2) xoay_demY = 0;
 		glutPostRedisplay();
 		break;
-	case ';':
+	case 'z':
 		di_chuyen_demZ -= 0.05;
 		if (di_chuyen_demZ < -0.8) di_chuyen_demZ = -0.8, di_chuyen_demY = -0.27, xoay_demX = 0;
 		glutPostRedisplay();
 		break;
-	case ':'://di chuyển gối
+	case 'Z'://di chuyển gối
 		goi1 += 0.05;
 		if (goi1 > 0) goi1 = 0;
 		glutPostRedisplay();
 		break;
-	case '`':
+	case '1':
 		goi1 -= 0.05;
 		if (goi1 < -0.5) goi1 = -0.5;
 		glutPostRedisplay();
 		break;
-	case '~'://di chuyển gối
+	case '2'://di chuyển gối
 		goi2 += 0.05;
 		if (goi2 > 0.05) goi2 = 0;
 		glutPostRedisplay();
@@ -2907,12 +1960,13 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case 'Q'://di chuyển giường dọc
+
+	case '4'://di chuyển giường dọc
 		xx -= 0.1;
 		if (xx < 0) xx = 0;
 		glutPostRedisplay();
 		break;
-	case 'S':
+	case '5':
 		if (di_chuyenz <= -1.2f) {
 			xx += 0.1f;
 			if (xx > 0.7f) xx = 0.7f;
@@ -2927,12 +1981,12 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case 'E'://di chuyển giường ngang
+	case '6'://di chuyển giường ngang
 		zz -= 0.1;
 		if (zz < 0) zz = 0;
 		glutPostRedisplay();
 		break;
-	case 'R':
+	case '7':
 		zz += 0.1;
 		if (zz > 0.3) zz = 0.3;
 		glutPostRedisplay();
@@ -2942,7 +1996,7 @@ void keyboard(unsigned char key, int x, int y)
 		aa -= 10;
 		glutPostRedisplay();
 		break;
-	case 'Y':
+	case '9':
 		aa += 10;
 		glutPostRedisplay();
 		break;
@@ -2958,22 +2012,22 @@ void keyboard(unsigned char key, int x, int y)
 		if (aaa > 110) aaa = 110;
 		glutPostRedisplay();
 		break;
-	case 'D'://di chuyển ngan keo
+	case '#'://di chuyển ngan keo
 		NKTuGiong -= 0.01;
 		if (NKTuGiong < -0.15) NKTuGiong = -0.15;
 		glutPostRedisplay();
 		break;
-	case 'F':
+	case '$':
 		NKTuGiong += 0.01;
 		if (NKTuGiong > 0) NKTuGiong = 0;
 		glutPostRedisplay();
 		break;
 
-	case 'Z'://quay tủ
+	case '%'://quay tủ
 		bb -= 10;
 		glutPostRedisplay();
 		break;
-	case 'V':
+	case '^':
 		bb += 10;
 		glutPostRedisplay();
 		break;
@@ -2989,7 +2043,7 @@ void keyboard(unsigned char key, int x, int y)
 		glutPostRedisplay();
 		break;
 
-	case ' '://di chuyển dọc
+	case ')'://di chuyển dọc
 		zzz -= 0.01;
 		if (zzz < -0.1) zzz = -0.1;
 		glutPostRedisplay();
@@ -2999,32 +2053,93 @@ void keyboard(unsigned char key, int x, int y)
 		if (zzz > 0.8) zzz = 0.8;
 		glutPostRedisplay();
 		break;
-	case '|':
+	case '+':
 		kim += 90;
 		glutPostRedisplay();
 		break;
-		
-	default:
+
+
+
+		//điều khiển phóng to thu nhỏ (l, r, top ,bottom, zNear, zFar :biến khởi tạo camera)
+	case '-':
+		l *= 1.1f; r *= 1.1f;
+		glutPostRedisplay();
+		break;
+	case '=':
+		l *= 0.9f; r *= 0.9f;
+		glutPostRedisplay();
+		break;
+	case 'y':
+		bottom *= 1.1f; top *= 1.1f;
+		glutPostRedisplay();
+		break;
+	case 'Y':
+		bottom *= 0.9f; top *= 0.9f;
+		glutPostRedisplay();
+		break;
+	case '?':
+		zNear *= 1.1f; zFar *= 1.1f;
+		glutPostRedisplay();
+		break;
+	case '/':
+		zNear *= 0.9f; zFar *= 0.9f;
+		glutPostRedisplay();
+		break;
+
+	case ' ':
+		// reset values to their defaults
+		l = -1.0;
+		r = 1.0;
+		bottom = -1.0;
+		top = 1.0;
+		zNear = 1.0;
+		zFar = 4.0;
+		xoay_roomx = 0;
+		xoay_roomy = 0;
+		xoay_roomz = 0;
+		zzz = 0, yyy = 0, xxx = 0, aaa = 0, bb = 0;
+		xoay_demY = 0, xoay_demX = 0, goi1 = 0, goi2 = 0;
+		zz = 0, yy = 0, xx = 0, aa = 0, di_chuyen_demX = 0, di_chuyen_demZ = 0, di_chuyen_demY = 0;
+		NKTuGiong = 0;
+		di_chuyen_banx = 0, di_chuyen_bany = 0, di_chuyen_banz = 0;
+		mo_canh_tu_ban = 0;
+		keo_ngan_keo_banx = 0, keo_ngan_keo_bany = 0, keo_ngan_keo_banz = 0;
+		di_chuyenx = 0, di_chuyeny = 0, di_chuyenz = 0, quay_ghe = 0;
+		di_chuyen_tranhz = 0;
+		di_chuyen_tu_quan_aox = 0, di_chuyen_tu_quan_aoy = 0, di_chuyen_tu_quan_aoz = 0;
+		quay_canh_phai_tu_quan_ao = 0;
+		quay_canh_trai_tu_quan_ao = 0;
+		di_chuyen_ngan_keo_tu_quan_aoz = 0;
+		glutPostRedisplay();
 		break;
 	}
-
-	update_camera();
-
 }
+
+
+
+
 int main(int argc, char** argv)
 {
+	// main function: program starts here
+
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowSize(640, 640);
+	glutInitWindowSize(700, 700);
 	glutInitWindowPosition(100, 150);
-	glutCreateWindow("A Cube is rotated by keyboard and shaded");
+	glutCreateWindow("Drawing a bedroom");
+
+
 	glewInit();
+
 	generateGeometry();
 	initGPUBuffers();
 	shaderSetup();
+
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	glutReshapeFunc(reshape);
+	
+
 	glutMainLoop();
 	return 0;
 }
